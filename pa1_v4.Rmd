@@ -1,0 +1,174 @@
+---
+title: "Data Visualization - Peer Assessment 1"
+author: "Elsacha"
+date: "July 29, 2015"
+output:
+  pdf_document: default
+  html_document:
+    theme: cerulean
+---
+## Motivation
+We live in the age of global warming and temperature observations show that temperatures have risen in the past century or so. The provided data contains temperature deviations from the average level which is calculated based on the period from 1951 to 1980. The goal of this visualization is to see if the average temperatures before the reference period were lower (negative deviations) and higher after the reference period (positive deviations). I use a heatmap with months on the X-axis and decades on the Y-axis.
+
+```{r echo = FALSE, results="hide"}
+# Prepare the data
+raw = read.csv("./data/ExcelFormattedGISTEMPDataCSV.csv", na.strings = "****")
+#keep data for months only
+years = raw[,1:13]
+years$Decade = rep(NA, nrow(years))
+
+#add decades
+years$Decade = rep(NA, nrow(years))
+years[1:10,]$Decade = rep("1880-1889", 10)
+years[1:10,]$Year = c(1:10)
+
+years[11:20,]$Decade = rep("1890-1899", 10)
+years[11:20,]$Year = c(1:10)
+
+years[21:30,]$Decade = rep("1900-1909", 10)
+years[21:30,]$Year = c(1:10)
+
+years[31:40,]$Decade = rep("1910-1919", 10)
+years[31:40,]$Year = c(1:10)
+
+years[41:50,]$Decade = rep("1920-1929", 10)
+years[41:50,]$Year = c(1:10)
+
+years[51:60,]$Decade = rep("1930-1939", 10)
+years[51:60,]$Year = c(1:10)
+
+years[61:70,]$Decade = rep("1940-1949", 10)
+years[61:70,]$Year = c(1:10)
+
+years[71:80,]$Decade = rep("1950-1959", 10)
+years[71:80,]$Year = c(1:10)
+
+years[81:90,]$Decade = rep("1960-1969", 10)
+years[81:90,]$Year = c(1:10)
+
+years[91:100,]$Decade = rep("1970-1979", 10)
+years[91:100,]$Year = c(1:10)
+
+years[101:110,]$Decade = rep("1980-1989", 10)
+years[101:110,]$Year = c(1:10)
+
+years[111:120,]$Decade = rep("1990-1999", 10)
+years[111:120,]$Year = c(1:10)
+
+years[121:130,]$Decade = rep("2000-2009", 10)
+years[121:130,]$Year = c(1:10)
+
+years[131:136,]$Decade = rep("2010-2015", 6)
+years[131:136,]$Year = c(1:6)
+
+library(reshape2)
+
+years$Decade = as.factor(years$Decade)
+years$Year = as.factor(years$Year)
+
+molten = melt(years, id=c("Decade", "Year"))
+colnames(molten) = c("Decade", "Year", "Month", "Dev")
+molten$Dev = as.numeric(molten$Dev)
+molten = molten[!is.na(molten$Dev),]
+
+decs = molten
+decs$Year = NULL
+
+decs.avg = tapply(decs$Dev, list(decs$Decade, decs$Month), mean)
+df.decs.avg = as.data.frame(decs.avg)
+
+#Make a Period column
+df.decs.avg$Decade = unlist(rownames(df.decs.avg))
+rownames(df.decs.avg) = NULL
+
+molten2 = melt(df.decs.avg, id=c("Decade"))
+colnames(molten2) = c("Decade", "Month", "Avg.Dev")
+
+#sanity check of average deviation to see if calculations are correct
+#for January 1880-1889
+mean(years[1:10,]$Jan)#=-30.7
+head(molten2)[1,]$Avg.Dev #=-30.7 OK
+```
+ 
+#### Plot 1: Heatmap - Average Temperature Deviations 1880-2015
+
+
+```{r echo=FALSE}
+library(ggplot2)
+molten2$Month = factor(molten2$Month, ordered=TRUE, levels=c("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+ggplot(molten2, aes(x = Month, y = Decade))+
+  geom_tile(aes(fill = Avg.Dev/100)) +
+  scale_fill_gradient(name="Deviation", low="white", high="red") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank()) +
+  ggtitle("Monthly Temperature Deviations in degrees Celsius by Decade")
+#ggsave(file="heatmap_v4.png", width=7, height=7)
+```
+ 
+ 
+The plot confirms the global warming trend. Lighter colors at the bottom of the map represent temperatures in the beginning of observations and correspond to negative deviations from the mean reference level (1951 - 1980). As we move up the heatmap above the reference level, we see how colors become brighter (positive deviations) and become red (increase of approximately 0.75 degrees Celcius compared to the reference and of 1 degree Celcius compared to the beginning of observations in 1880).
+
+#### Plot 2: Barplot - Average Monthly Temperature Deviations by Period compared to reference
+```{r echo=FALSE}
+months = raw[,1:13]
+months$period = rep(NA, nrow(months))
+
+#set period 1 1880-1919
+months[1:40,]$period = rep("1880-1919", 40)
+
+#set period 2 1920-1949
+months[41:70,]$period = rep("1920-1949", 30)
+
+#set period 3 - Reference period 1950-1979
+months[71:100,]$period = rep("1950-1979 Ref", 30)
+
+#set period 4 1980-1999
+months[101:120,]$period = rep("1980-1999", 20)
+
+#set period 5 2000 - 2015
+months[121:136,]$period = rep("2000-2015", 16)
+
+months$period = as.factor(months$period)
+
+
+library(reshape2)
+
+molten3 = melt(months, id=c("Year", "period"))
+colnames(molten3) = c("Year", "Period", "Month", "Dev")
+molten3$Dev = as.numeric(molten3$Dev)
+molten3 = molten3[!is.na(molten3$Dev),]
+
+periods = molten3[,2:4]
+
+periods.avg = tapply(periods$Dev, list(periods$Period, periods$Month), mean)
+df.periods.avg = as.data.frame(periods.avg)
+
+#Make a Period column
+df.periods.avg$Period = unlist(rownames(df.periods.avg))
+rownames(df.periods.avg) = NULL
+
+molten4 = melt(df.periods.avg, id=c("Period"))
+colnames(molten4) = c("Period", "Month", "Avg.Dev")
+
+suppressWarnings(print(
+ggplot(molten4, aes(x=Period, y=Avg.Dev/100)) +
+  geom_bar(stat="identity", color="black", fill="#FF4719") +
+  facet_wrap(~ Month, ncol = 3) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  xlab("Decade")+
+  ylab("Average Deviation in degrees Celsius")+
+  ggtitle("Temperature Deviation by Month and by Period, 1880 - 2015")
+))
+#ggsave(file="barplot_v4.png", width=7, height=7)
+
+```
+
+
+The barplot also confirms that temperatures before the reference period were lower (negative deviations) and higher after the reference period (positive deviations).
+
+
+
+
