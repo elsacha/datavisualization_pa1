@@ -3,12 +3,20 @@ title: "Data Visualization - Peer Assessment 1"
 author: "Elsacha"
 date: "July 29, 2015"
 output:
-  pdf_document: default
   html_document:
     theme: cerulean
+  pdf_document: default
 ---
 ## Motivation
-We live in the age of global warming and temperature observations show that temperatures have risen in the past century or so. The provided data contains temperature deviations from the average level which is calculated based on the period from 1951 to 1980. The goal of this visualization is to see if the average temperatures before the reference period were lower (negative deviations) and higher after the reference period (positive deviations). I use a heatmap with months on the X-axis and decades on the Y-axis.
+We live in the age of global warming and temperature observations show that temperatures have risen in the past century or so. The provided data contains temperature deviations from the average level which is calculated based on the period from 1951 to 1980. The goal of this visualization is to see if the average temperatures before the reference period were lower (negative deviations) and higher after the reference period (positive deviations).
+
+The heatmap allows to show 3 variables: 
+
+X-axis: Months (Discrete)
+
+Y-axis: Decades (Discrete)
+
+Deviation (Continuous) is shown by different color intensities and numeric values.
 
 ```{r echo = FALSE, results="hide"}
 # Prepare the data
@@ -101,11 +109,12 @@ molten2$Month = factor(molten2$Month, ordered=TRUE, levels=c("Jan", "Feb", "Mar"
 ggplot(molten2, aes(x = Month, y = Decade))+
   geom_tile(aes(fill = Avg.Dev/100)) +
   scale_fill_gradient(name="Deviation", low="white", high="red") + 
+  geom_text(aes(fill = molten2$Avg.Dev/100, label = round(molten2$Avg.Dev/100, 2)), size=2.5) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         axis.title.x = element_blank(),
         axis.title.y = element_blank()) +
   ggtitle("Monthly Temperature Deviations in degrees Celsius by Decade")
-#ggsave(file="heatmap_v4.png", width=7, height=7)
+#ggsave(file="heatmap_with_values_v4.png", width=10, height=10)
 ```
  
  
